@@ -1,1 +1,31 @@
-fewfwe
+{
+    "backupsLocation":  "C:\xxx",
+	"initialized": 0,
+	"restorePoints":  7,
+    "TFTPServerIP":  "",
+	"switchXXX":  [
+                                {
+                                    "Switch1": {
+										"username": "xxx",
+										"password": "xxx",
+										"ip": "XXX.XXX.XXX.XXX"
+									},
+									"Switch2": {
+										"username": "xxx",
+										"password": "xxx",
+										"ip": "XXX.XXX.XXX.XXX"
+									},
+									"command1": "copy running-config tftp"
+                            ],
+    "routerXXX":  [
+                                {
+                                    "FGT-XXX": {
+										"username": "xxx",
+										"password": "xxx",
+										"ip": "XXX.XXX.XXX.XXX"
+									},
+									"command1": "execute backup config tftp",
+									"command2": "xxx"
+                                }
+                            ]
+}
