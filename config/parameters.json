@@ -1,31 +1,51 @@
 {
-    "backupsLocation":  "C:\xxx",
-	"initialized": 0,
-	"restorePoints":  7,
-    "TFTPServerIP":  "",
-	"switchXXX":  [
-                                {
-                                    "Switch1": {
-										"username": "xxx",
-										"password": "xxx",
-										"ip": "XXX.XXX.XXX.XXX"
-									},
-									"Switch2": {
-										"username": "xxx",
-										"password": "xxx",
-										"ip": "XXX.XXX.XXX.XXX"
-									},
-									"command1": "copy running-config tftp"
-                            ],
-    "routerXXX":  [
-                                {
-                                    "FGT-XXX": {
-										"username": "xxx",
-										"password": "xxx",
-										"ip": "XXX.XXX.XXX.XXX"
-									},
-									"command1": "execute backup config tftp",
-									"command2": "xxx"
-                                }
-                            ]
+	"configBackupsLocation": "Path were you want to save you configurations C:/xxx/xxx/",
+	"configRestorePoints": 7,
+	"configTFTPServerIP": "TFTP server IP",
+	"accessPoints": [{
+		"backupCommand" : "copy config tftp $TFTPServer $fileName.bak",
+		"hostname": "Hostname of the device",
+		"informations": {
+			"ip": "IP of the device you want to backup configuration",
+			"username": "Username used to connect to the device",
+			"password": "Secure string password used to connect to the device"
+		}
+	}],
+	"firewalls": [{
+		"backupCommand" : "execute backup config tftp $fileName.cfg $TFTPServer",
+		"hostname": "Hostname of the device",
+		"informations": {
+			"ip": "IP of the device you want to backup configuration",
+			"username": "Username used to connect to the device",
+			"password": "Secure string password used to connect to the device"
+		}
+	}],
+	"switchs": [{
+			"backupCommand" : "copy running-config tftp $TFTPServer $fileName.bak",
+			"hostname": "Hostname of the device",
+			"informations": {
+				"ip": "IP of the device you want to backup configuration",
+				"username": "Username used to connect to the device",
+				"password": "Secure string password used to connect to the device"
+			}
+		},
+		{
+			"backupCommand" : "copy running-config tftp $TFTPServer $fileName.bak",
+			"hostname": "Hostname of the device",
+			"informations": {
+				"ip": "IP of the device you want to backup configuration",
+				"username": "Username used to connect to the device",
+				"password": "Secure string password used to connect to the device"
+			}
+		},
+		{
+			"backupCommand" : "copy running-config tftp $TFTPServer $fileName.bak",
+			"hostname": "Hostname of the device",
+			"informations": {
+				"ip": "IP of the device you want to backup configuration",
+				"username": "Username used to connect to the device",
+				"password": "Secure string password used to connect to the device"
+			}
+		}
+	]
 }
