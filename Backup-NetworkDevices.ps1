@@ -46,10 +46,13 @@
 #                                                                                          #
 ############################################################################################
 
+# Obtain the parent folder path of the currently running script and store it in the $scriptPath variable.
 $scriptPath = $MyInvocation.MyCommand.Path
 $scriptPath = Split-Path $scriptPath -Parent
 
-# Emplacement du fichier JSON
+# Check if a JSON file named networkDevices.json exists in the script's config folder. 
+# If the file exists, it is loaded into the $networkEquipmentJSON variable. 
+# If the file does not exist, the script creates the config folder and downloads the networkDevices.json file from a GitHub repository.
 if (Get-Content "$scriptPath\config\networkDevices.json" -erroraction 'silentlycontinue' )  {
     $networkEquipmentJSON = Get-Content "$scriptPath\config\networkDevices.json" | ConvertFrom-Json
     Write-Host "✔️ - JSON file has been found and loaded" -ForegroundColor green
@@ -68,9 +71,10 @@ if (Get-Content "$scriptPath\config\networkDevices.json" -erroraction 'silentlyc
     break
 }
 
-# Emplacement où les configurations des équipements seront stockées 
+# Assign a value to the $folderLocation variable by extracting a path from the $networkEquipmentJSON object and replacing forward slashes with backslashes. 
 $folderLocation = $networkEquipmentJSON.configBackupsLocation | % {$_.replace("/","\")}
 
+# Check if a directory path stored in the $folderLocation variable exists. If the directory path does not exist, it creates a new directory with the path specified by $folderLocation.
 if(Test-Path -Path $folderLocation) {
      Write-Host "✔️ - The folder $folderLocation already exist." -ForegroundColor green
 } else {
@@ -79,6 +83,8 @@ if(Test-Path -Path $folderLocation) {
     New-Item $folderLocation -ItemType Directory
 }
 
+# Obtain the current date and time as a string in a specific format and store it in the $actualDate variable.
+# The variable will be used later in config file name backup. 
 $actualDate = Get-Date -Format "MM.dd.yyyy_HH-mm-ss"
 
 ############################################################################################
@@ -87,6 +93,7 @@ $actualDate = Get-Date -Format "MM.dd.yyyy_HH-mm-ss"
 #                                                                                          #
 ############################################################################################
 
+# Takes an object as a parameter and returns a list of properties from that object, excluding any properties that start with the string "config".
 function Get-NetworkEquipments($object) {
     $keys = $object | Get-Member -MemberType NoteProperty | Where-Object -Property Name -notlike "config*" | Select-Object -ExpandProperty Name
     foreach ($key in $keys) {
@@ -94,6 +101,13 @@ function Get-NetworkEquipments($object) {
     }
 }
 
+# The function Backup-NetworkEquipmentsConfig performs the following tasks for each network equipment in the list of $networkEquipments:
+#    • Connects to the equipment via SSH using the credentials specified in the JSON configuration file.
+#    • Sends a backup command to the equipment using the backup command specified in the JSON configuration file, replacing the $fileName variable with the equipment hostname and the current date and time stamp and replacing the $TFTPServer variable with the TFTP server IP address specified in the JSON configuration file.
+#    • Disconnects from the equipment via SSH.
+#    • Checks if a folder with the equipment hostname exists in the backup location. If it does not exist, creates the folder.
+#    • Moves the backup file created by the equipment to the equipment's folder in the backup location, renaming the file to include the equipment hostname and the current date and time stamp.
+#    • Deletes old backup files from the equipment's folder in the backup location, keeping the number of backup files specified in the JSON configuration file.
 function Backup-NetworkEquipmentsConfig {
     foreach ($equipment in $networkEquipments) {
         Write-Host "⚠️ - Connecting to $($equipment.hostname) [$($equipment.informations.ip)]" -ForegroundColor Yellow
@@ -137,6 +151,7 @@ function Backup-NetworkEquipmentsConfig {
 #                                                                                          #
 ############################################################################################
 
+# Check if the "TFTPServer" service is currently stopped or not. If the service is stopped, it starts the service.
 $serviceState = Get-Service -Name "TFTPServer"
 
 if ($serviceState.Status -eq "Stopped") {
@@ -152,6 +167,8 @@ if ($serviceState.Status -eq "Stopped") {
 #                                                                                          #
 ############################################################################################
 
+# Check if the Posh-SSH module is installed. If the module is detected, it is imported. 
+# If the module is not detected, the script attempts to install the module using the Install-Module cmdlet.
 if (Get-Module -ListAvailable -Name "Posh-SSH") {
     Import-Module Posh-SSH
     Write-Host "✔️ - The module Posh-SSH has been detected succesfully." -ForegroundColor green
@@ -167,7 +184,10 @@ if (Get-Module -ListAvailable -Name "Posh-SSH") {
 #                                                                                          #
 ############################################################################################
 
+# Calls the Get-NetworkEquipments function to get the list of network equipment from the $networkEquipmentJSON configuration file and store it in the $networkEquipments variable.
 $networkEquipments = Get-NetworkEquipments $networkEquipmentJSON
+
+# Calls the Backup-NetworkEquipmentsConfig function to start the backup process for all the network equipment in the $networkEquipments variable.
 Backup-NetworkEquipmentsConfig
 
 ############################################################################################
@@ -176,6 +196,7 @@ Backup-NetworkEquipmentsConfig
 #                                                                                          #
 ############################################################################################
 
+# Check if the Open TFTP Server service if it is currently running. If its Status property is equal to "Running", then the Stop-Service cmdlet is used to stop the service.
 if ($serviceState.Status -eq "Running") {
     Stop-Service -Name "TFTPServer"
     Write-Host "⚠️ - The Open TFTP Server has been stopped !" -ForegroundColor yellow
