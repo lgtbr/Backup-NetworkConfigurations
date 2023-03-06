@@ -71,6 +71,14 @@ if (Get-Content "$scriptPath\config\networkDevices.json" -erroraction 'silentlyc
 # Emplacement où les configurations des équipements seront stockées 
 $folderLocation = $networkEquipmentJSON.configBackupsLocation | % {$_.replace("/","\")}
 
+if(Test-Path -Path $folderLocation) {
+     Write-Host "✔️ - The folder $folderLocation already exist." -ForegroundColor green
+} else {
+    Write-Host "❌ - The folder $folderLocation does not exist !" -ForegroundColor red
+    Write-Host "⚠ - Creation of the folder $folderLocation..." -ForegroundColor yellow
+    New-Item $folderLocation -ItemType Directory
+}
+
 $actualDate = Get-Date -Format "MM.dd.yyyy_HH-mm-ss"
 
 ############################################################################################
@@ -143,14 +151,6 @@ if ($serviceState.Status -eq "Stopped") {
 #                                3 - Check module Posh-SSH                                 #
 #                                                                                          #
 ############################################################################################
-
-if(Test-Path -Path $folderLocation) {
-     Write-Host "✔️ - The folder $folderLocation already exist." -ForegroundColor green
-} else {
-    Write-Host "❌ - The folder $folderLocation does not exist !" -ForegroundColor red
-    Write-Host "⚠ - Creation of the folder $folderLocation..." -ForegroundColor yellow
-    New-Item $folderLocation -ItemType Directory
-}
 
 if (Get-Module -ListAvailable -Name "Posh-SSH") {
     Import-Module Posh-SSH
