@@ -176,8 +176,6 @@ Backup-NetworkEquipmentsConfig
 #                                                                                          #
 ############################################################################################
 
-$serviceState = Get-Service -Name "TFTPServer"
-
 if ($serviceState.Status -eq "Running") {
     Stop-Service -Name "TFTPServer"
     Write-Host "⚠️ - The Open TFTP Server has been stopped !" -ForegroundColor yellow
