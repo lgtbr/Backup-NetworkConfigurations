@@ -14,23 +14,32 @@
     Backup command is sent to the Open TFTP Server and backup is stored into TFTP Server.
 
     This is how it works :
-    A)
+    1) The script get current location, check if networkDevices.json file and /config/ folder exists
+    
+    2) Loading Backup-NetworkEquipmentsConfig and Get-NetworkEquipments functions
 
+    3) Starting TFTP Server
+
+    4) Check if module Posh-SSH is installed
+
+    5) Backing up network devices by calling Get-NetworkEquipments and Backup-NetworkEquipmentsConfig functions
+
+    6) Stopping TFTP Server 
 
     / ! \ PLEASE READ THE PREREQUISITES
 
-    1) Download Open TFTP Server :
-    In order to work, please download and install Open TFTP Server via this link :
+    1) Download Open TFTP Server:
+    In order to work, please download and install Open TFTP Server via this link:
     https://sourceforge.net/projects/tftp-server/
 
-    2) Setup Open TFTP Server :
+    2) Setup Open TFTP Server:
 
-        A) Create a new folder where you want to store your backup :
+        A) Create a new folder where you want to store your backup:
         For example : C:\Backup_CFG_TFTP
 
-        B) On the Open TFTP Server configuration file "OpenTFTPServerInstallationDirectory\OpenTFTPServerMT.ini" (default : C:\OpenTFTPServer\OpenTFTPServerMT.ini) : 
+        B) On the Open TFTP Server configuration file "OpenTFTPServerInstallationDirectory\OpenTFTPServerMT.ini" (default : C:\OpenTFTPServer\OpenTFTPServerMT.ini): 
         Configure your home directory. Please, use the same path where you want to store your backup.
-        For example, you want to store your backups into "C:\Backup_CFG_TFTP", define "C:\Backup_CFG_TFTP" as home foler like this :
+        For example, you want to store your backups into "C:\Backup_CFG_TFTP", define "C:\Backup_CFG_TFTP" as home foler like this:
 
         [HOME]
         #You should specify home directory(s) here
@@ -39,7 +48,7 @@
         #deposited like:-
         C:\Backup_CFG_TFTP\
 
-        Define the clients allowed to connect to the TFTP Server :
+        Define the clients allowed to connect to the TFTP Server:
         [ALLOWED-CLIENTS]
         #These are permitted clients for TFTP Access.
         #Hosts having IP address within these ip ranges
@@ -49,7 +58,7 @@
         192.168.1.12
         192.168.2.0/24
 
-        C) Configure clients permissions :
+        C) Configure clients permissions:
         
         #Next are the file operation permissions
         #Clients can only read files if read is
@@ -62,8 +71,8 @@
         #overwrite is #set to Y, default is N
         overwrite=Y
 
-    3) Fill networkDevices.json file :
-    You need to fill every values, here here are the details :
+    3) Fill networkDevices.json file:
+    You need to fill every values, here here are the details:
 
     "configBackupsLocation": "C:/XXX", 
                                  ^ : Where you want to store your backup. Re-use the path of the folder created in step 1*
@@ -91,7 +100,7 @@
 	       }
 	}],
 
-    4) Set the Open TFTP MultiThreaded Server service to manual :
+    4) Set the Open TFTP MultiThreaded Server service to manual:
     Go to your windows services et set the Open TFTP MultiThreaded Server service startup type to manual.
 
     Why ?
@@ -265,6 +274,8 @@ Backup-NetworkEquipmentsConfig
 ############################################################################################
 
 # Check if the Open TFTP Server service if it is currently running. If its Status property is equal to "Running", then the Stop-Service cmdlet is used to stop the service.
+$serviceState = Get-Service -Name "TFTPServer"
+
 if ($serviceState.Status -eq "Running") {
     Stop-Service -Name "TFTPServer"
     Write-Host "⚠️ - The Open TFTP Server has been stopped !" -ForegroundColor yellow
