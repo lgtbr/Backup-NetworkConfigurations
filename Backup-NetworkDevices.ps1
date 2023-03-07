@@ -1,42 +1,110 @@
-#$secureString = Read-Host -AsSecureString | ConvertFrom-SecureString
+#Read-Host -AsSecureString | ConvertFrom-SecureString
 
 <#
-    .SYNOPSIS
-    Adds a file name extension to a supplied name.
+.NOTES
+    Author: Louis GATTABRUSI
+    Last Edit: 2023-03-06
+    Version 1.0 - initial release of Backup-NetworkDevices.ps1
 
-    .DESCRIPTION
-    Adds a file name extension to a supplied name.
-    Takes any strings for the file name or extension.
+.SYNOPSIS
+    Script to backup network devices
 
-    .PARAMETER Name
-    Specifies the file name.
+.DESCRIPTION
+    This script backup your network devices via SSH connection (Posh-SSH Module).
+    Backup command is sent to the Open TFTP Server and backup is stored into TFTP Server.
 
-    .PARAMETER Extension
-    Specifies the extension. "Txt" is the default.
+    This is how it works :
+    A)
 
-    .INPUTS
-    None. You cannot pipe objects to Add-Extension.
 
-    .OUTPUTS
-    System.String. Add-Extension returns a string with the extension or file name.
+    / ! \ PLEASE READ THE PREREQUISITES
 
-    .EXAMPLE
-    PS> extension -name "File"
-    File.txt
+    1) Download Open TFTP Server :
+    In order to work, please download and install Open TFTP Server via this link :
+    https://sourceforge.net/projects/tftp-server/
 
-    .EXAMPLE
-    PS> extension -name "File" -extension "doc"
-    File.doc
+    2) Setup Open TFTP Server :
 
-    .EXAMPLE
-    PS> extension "File" "doc"
-    File.doc
+        A) Create a new folder where you want to store your backup :
+        For example : C:\Backup_CFG_TFTP
 
-    .LINK
-    Online version: http://www.fabrikam.com/extension.html
+        B) On the Open TFTP Server configuration file "‪OpenTFTPServerInstallationDirectory\OpenTFTPServerMT.ini" (default : ‪C:\OpenTFTPServer\OpenTFTPServerMT.ini) : 
+        Configure your home directory. Please, use the same path where you want to store your backup.
+        For example, you want to store your backups into "C:\Backup_CFG_TFTP", define "C:\Backup_CFG_TFTP" as home foler like this :
 
-    .LINK
-    Set-Item
+        [HOME]
+        #You should specify home directory(s) here
+        #You can specify one directory as home
+        #directory, from where files will be served or
+        #deposited like:-
+        C:\Backup_CFG_TFTP\
+
+        Define the clients allowed to connect to the TFTP Server :
+        [ALLOWED-CLIENTS]
+        #These are permitted clients for TFTP Access.
+        #Hosts having IP address within these ip ranges
+        #only will be responded to DNS requests.
+        #32 ranges can be specified.
+        #If none is specified, then all are allowed
+        192.168.1.12
+        192.168.2.0/24
+
+        C) Configure clients permissions :
+        
+        #Next are the file operation permissions
+        #Clients can only read files if read is
+        #set to Y, default is Y
+        read=Y
+        #Clients can only create new files if write is
+        #set to Y, default is N
+        write=Y
+        #Clients can only overwrite existing files if
+        #overwrite is #set to Y, default is N
+        overwrite=Y
+
+    3) Fill networkDevices.json file :
+    You need to fill every values, here here are the details :
+
+    "configBackupsLocation": "C:/XXX", 
+                                 ^ : Where you want to store your backup. Re-use the path of the folder created in step 1*
+                                 Please use forward slashes instead of backslashes. Forward slashes will be replaced by backslashes when executing the script
+
+	"configRestorePoints": X,
+                           ^ : How many backup files you want to keep per device
+
+	"configTFTPServerIP": "XXX.XXX.XXX.XXX", 
+                                  ^ : IP of the TFTP server. Even if it's on the same server, DON'T USE 127.0.0.1
+
+    "XXX": [{
+      ^ : Category of devices for example : firewalls, switchs, access points, ...
+        "backupCommand" : "copy config tftp $TFTPServer $fileName.bak",
+                                           ^ : Backup command that will be send by the device**
+	       "hostname": "xxx",
+                      ^ : Hostname of the device
+	       "informations": {
+	           "ip": "XXX.XXX.XXX.XXX", 
+                          ^ : IP of the device you want to backup configuration
+	           "username": "xxx", 
+                          ^ : Username used to connect to the device
+	           "password": "01000000d08xxxx" 
+                               ^ : Device password as SecureString. To get the password converted as SecureString, please use the first line of the script***
+	       }
+	}],
+
+    4) Set the Open TFTP MultiThreaded Server service to manual :
+    Go to your windows services et set the Open TFTP MultiThreaded Server service startup type to manual.
+
+    Why ?
+    For security reasons, we don't leave the TFTP server open 24/7.
+    The script will start TFTP server at the beginning of the script and the service will be stopped at the end.
+
+    5) Create a firewall rule to allow TFTP trafic (UDP port 69 (nice number btw))
+
+.PARAMETER <none>
+    <none>
+
+.LINK
+    https://github.com/lgtbr/Backup-NetworkDevices/
 #>
 
 
@@ -61,13 +129,13 @@ if (Get-Content "$scriptPath\config\networkDevices.json" -erroraction 'silentlyc
         Write-Host "✔️ - The folder $scriptPath\config already exist." -ForegroundColor green
     } else {
         Write-Host "❌ - The folder $scriptPath\config does not exist !" -ForegroundColor red
-        Write-Host "⚠ - Creating folder $scriptPath\config" -ForegroundColor yellow
+        Write-Host "⚠️ - Creating folder $scriptPath\config" -ForegroundColor yellow
         New-Item "$scriptPath\config" -ItemType Directory | Out-Null
     }
     Write-Host "❌ - JSON file has not been found, file will be downloaded..." -ForegroundColor red
     Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lgtbr/Backup-NetworkDevices/main/config/networkDevices.json" -OutFile "$scriptPath\config\networkDevices.json"
-    Write-Host "⚠ - File has been downloaded, please configure the file before executing the script" -ForegroundColor yellow
-    Write-Host "⚠ - You can find more infornations on GitHub page https://github.com/lgtbr/Backup-NetworkDevices" -ForegroundColor yellow
+    Write-Host "⚠️ - File has been downloaded, please configure the file before executing the script" -ForegroundColor yellow
+    Write-Host "⚠️ - You can find more infornations on GitHub page https://github.com/lgtbr/Backup-NetworkDevices" -ForegroundColor yellow
     break
 }
 
@@ -79,7 +147,7 @@ if(Test-Path -Path $folderLocation) {
      Write-Host "✔️ - The folder $folderLocation already exist." -ForegroundColor green
 } else {
     Write-Host "❌ - The folder $folderLocation does not exist !" -ForegroundColor red
-    Write-Host "⚠ - Creation of the folder $folderLocation..." -ForegroundColor yellow
+    Write-Host "⚠️ - Creation of the folder $folderLocation..." -ForegroundColor yellow
     New-Item $folderLocation -ItemType Directory
 }
 
@@ -156,7 +224,7 @@ $serviceState = Get-Service -Name "TFTPServer"
 
 if ($serviceState.Status -eq "Stopped") {
     Start-Service -Name "TFTPServer"
-    Write-Host "⚠  - Starting Open TFTP Server service..." -ForegroundColor yellow
+    Write-Host "⚠️  - Starting Open TFTP Server service..." -ForegroundColor yellow
 } else {
     Write-Host "✔️ - Open TFTP Server service is already started !" -ForegroundColor green
 }
