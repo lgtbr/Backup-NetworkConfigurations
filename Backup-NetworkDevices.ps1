@@ -28,7 +28,7 @@
         A) Create a new folder where you want to store your backup :
         For example : C:\Backup_CFG_TFTP
 
-        B) On the Open TFTP Server configuration file "OpenTFTPServerInstallationDirectory\OpenTFTPServerMT.ini" (default : ‪C:\OpenTFTPServer\OpenTFTPServerMT.ini) : 
+        B) On the Open TFTP Server configuration file "OpenTFTPServerInstallationDirectory\OpenTFTPServerMT.ini" (default : C:\OpenTFTPServer\OpenTFTPServerMT.ini) : 
         Configure your home directory. Please, use the same path where you want to store your backup.
         For example, you want to store your backups into "C:\Backup_CFG_TFTP", define "C:\Backup_CFG_TFTP" as home foler like this :
 
